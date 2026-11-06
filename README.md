@@ -82,5 +82,5 @@ Abra e execute os notebooks na ordem numérica (01 a 04) para reproduzir toda a 
 Os dados originais utilizados neste projeto são provenientes do dataset público de transações para Anti-Money Laundering (AML) da IBM disponível no Kaggle. 
 
 Para reproduzir o pipeline localmente:
-1. Acesse o Kaggle e baixe os arquivos da base de dados (ex: `HI-Small_Trans.csv`, `HI-Small_accounts.csv`, `HI-Small_Patterns.txt`).
+1. Acesse o Kaggle e baixe os arquivos da base de dados (`HI-Small_Trans.csv`, `HI-Small_accounts.csv`, `HI-Small_Patterns.txt`).
 2. Posicione os arquivos brutos dentro da pasta `data/` do projeto.
