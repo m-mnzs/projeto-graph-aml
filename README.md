@@ -46,6 +46,8 @@ A inclusão das métricas de rede desloca a curva de performance drasticamente p
 
 A análise de importância de ganho (*gain*) do XGBoost revelou que as métricas estruturais de rede dominaram o processo de decisão do algoritmo, com destaque para o grau de entrada de destino (`tgt_in_degree`) e o `tgt_pagerank`, provando que o modelo aprendeu a caçar o crime através da topologia da rede financeira.
 
+![Feature Importance](output/output_top10_features_modelo_graph_enhanced.png)
+
 ---
 
 ## Estrutura do Repositório
@@ -73,6 +75,8 @@ Instale as dependências necessárias
 pip install pandas numpy scikit-learn xgboost networkx matplotlib seaborn
 ```
 Abra e execute os notebooks na ordem numérica (01 a 04) para reproduzir toda a investigação e modelagem.
+
+*Desenvolvido com rigor analítico e foco em Ciência de Dados aplicada à Prevenção a Fraudes.*
 
 ## Dados do Projeto
 Os dados originais utilizados neste projeto são provenientes do dataset público de transações para Anti-Money Laundering (AML) da IBM disponível no Kaggle. 
