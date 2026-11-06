@@ -1,0 +1,26 @@
+# Python / Ambientes Virtuais
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Banco de dados SQLite local
+data/aml_network.db
+
+# Arquivos brutos do Kaggle
+data/HI-Small_accounts.csv
+data/HI-Small_Patterns.txt
+data/HI-Small_Trans.csv
+
+# IDEs e Editores
+.vscode/
+.idea/
+
+# Arquivos do Sistema Operacional
+.DS_Store
+Thumbs.db
