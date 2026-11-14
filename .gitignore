@@ -1,13 +1,18 @@
-# Python / Ambientes Virtuais
-__pycache__/
-*.py[cod]
-*$py.class
+# Ambiente Virtual
 .venv/
 venv/
 ENV/
 
-# Jupyter Notebooks
-.ipynb_checkpoints/
+# Python / Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebooks Checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
 
 # Banco de dados SQLite local
 data/aml_network.db
@@ -21,6 +26,15 @@ data/HI-Small_Trans.csv
 .vscode/
 .idea/
 
-# Arquivos do Sistema Operacional
+# Sistema Operacional / Lixo de Diretório
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Logs e Arquivos Temporários
+*.log
+*.tmp

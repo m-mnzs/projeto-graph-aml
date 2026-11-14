@@ -1,86 +1,95 @@
-# Detecção Avançada de Lavagem de Dinheiro via Graph-Enhanced Machine Learning
+# Visão Geral do Projeto
 
-> Um pipeline analítico de ponta a ponta para identificar redes ilícitas e transações suspeitas combinando **Teoria de Grafos (NetworkX)** e **Machine Learning (XGBoost)**.
+Os sistemas tradicionais de Prevenção à Lavagem de Dinheiro (*Anti-Money Laundering* - AML) baseados estritamente em regras tabulares sofrem de uma falha crônica: a cegueira estrutural. Eles analisam transações de forma isolada, gerando um volume insustentável de falsos positivos (alarmes falsos).
 
----
-
-## Visão Geral do Projeto
-
-No ecossistema financeiro tradicional, modelos de detecção de fraudes baseados estritamente em dados tabulares (*amount*, *payment format*, *currency*) sofrem de um grave problema de **cegueira estrutural**. Criminosos estruturam transações fracionadas (*smurfing*) e utilizam contas de passagem (*mule accounts*) para ocultar o rastro do dinheiro, comportamentos que são invisíveis a uma análise de linha isolada.
-
-Este projeto demonstra como a incorporação de **Métricas Topológicas de Rede** (*Graph-Enhanced ML*) resolve essa "miopia" analítica, elevando a precisão preditiva na detecção de lavagem de dinheiro no dataset da IBM.
+Este projeto demonstra como injetar **inteligência topológica** (estruturas de rede) em modelos preditivos transforma um classificador inoperante em uma ferramenta de alta precisão para a triagem de compliance em instituições financeiras, usando o dataset (Arquivos HI-Small) do simulador IBM, disponível em [Kaggle](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml).
 
 ---
 
-## Arquitetura do Pipeline & Metodologia
+## Stack Tecnológica & Arquitetura
 
-O projeto foi modularizado em quatro etapas sequenciais, utilizando **SQLite** como a *Single Source of Truth* para garantir a reprodutibilidade e integridade do pipeline:
+O projeto foi construído adotando uma arquitetura híbrida focada em eficiência de memória e persistência relacional:
 
-1. **`01_coleta_e_carga.ipynb`**: Ingestão e estruturação dos dados brutos no banco relacional SQLite.
-2. **`02_eda_e_auditoria.ipynb`**: Análise Exploratória de Dados (EDA) focada em expor as limitações dos modelos tabulares tradicionais frente ao comportamento de redes criminosas.
-3. **`03_grafo_e_centralidade.ipynb`**: Construção da sub-rede de risco direcionada utilizando `NetworkX` e extração de propriedades topológicas vitais:
-   - **In-Degree / Out-Degree:** Identificação de contas coletoras e dispersoras de capital.
-   - **PageRank:** Mapeamento de nós de alta relevância sistêmica.
-   - **Betweenness Centrality:** Isolamento de contas-ponte (*mule accounts*).
-   *Persistência:* Todas as métricas foram gravadas de volta no banco SQLite para consumo na modelagem.
-4. **`04_modelagem_preditiva.ipynb`**: Comparação entre um modelo **Baseline Tabular** e o modelo **Graph-Enhanced (Tabular + Grafos)** utilizando `XGBoost`.
+* **Banco de Dados & Persistência:** `SQLite` (Fonte de verdade e motor de consultas para grandes volumes).
+* **Engenharia de Grafos:** `NetworkX` (Construção de grafos direcionados e extração de métricas topológicas em escala).
+* **Manipulação & Processamento:** `Python`, `Pandas`, `NumPy`.
+* **Modelagem Preditiva:** `XGBoost` (Otimizado para desbalanceamento extremo com `scale_pos_weight`).
+* **Avaliação & Visualização:** `Scikit-Learn` (Métrica PR-AUC), `Matplotlib`, `Seaborn`.
 
 ---
 
-## Resultados e Impacto Preditivo
+## Pipeline Metodológico
 
-Para lidar com o desbalanceamento severo da base (fraudes representam ~0.1% das transações), utilizamos a métrica **PR-AUC (Precision-Recall Area Under Curve)**, ideal para cenários de fraude, em conjunto com o ajuste de `scale_pos_weight`.
+1. **Auditoria e EDA Tabular (`02_eda_tabular.ipynb`):** Análise exploratória de mais de 5 milhões de transações, identificando padrões de desbalanceamento severo (apenas **0.1%** de fraudes na base) e mapeando o comportamento de moedas e canais de pagamento.
+2. **Engenharia Topológica de Redes (`03_engenharia_grafos.ipynb`):**
+   * Construção de um grafo direcionado de mais de 57 mil nós.
+   * Extração de métricas comportamentais cruciais: *PageRank* (influência sistêmica), *Betweenness Centrality* (pontes e contas-laranja) e *In/Out-Degrees* (identificação de coletores de *smurfing* e dispersores de capital).
+   * Persistência estruturada das features de rede diretamente no banco SQLite.
+3. **Modelagem Preditiva & Benchmark (`04_modelagem_preditiva.ipynb`):**
+   * **Modelo Baseline:** Treinado apenas com dados tabulares tradicionais.
+   * **Modelo Graph-Enhanced:** Enriquecido com as métricas topológicas de origem e destino, comparando a performance via curva *Precision-Recall* (PR-AUC).
 
-| Abordagem | PR-AUC Score | Precision (Classe Fraude) | Recall (Classe Fraude) | Diagnóstico |
+---
+
+## Resultados e Impacto de Negócio
+
+Para cenários de desbalanceamento extremo (fraudes raras), métricas convencionais como ROC-AUC geram falsas ilusões. O projeto utilizou o **PR-AUC** (*Precision-Recall Area Under Curve*), a métrica rigorosa de mercado para detecção de fraudes.
+
+| Abordagem | PR-AUC Score | Precisão (Classe 1) | Recall | Impacto Operacional |
 | :--- | :---: | :---: | :---: | :--- |
-| **Baseline (Apenas Tabular)** | `0.0469` | `0.01` (1%) | `0.88` | **Cegueira Estrutural** (Dispara falsos positivos em massa) |
-| **Graph-Enhanced (Tabular + Rede)** | **`0.7865`** | **`0.16` (16%)** | **`0.99`** | **Salto Massivo (+1.576% de Lift)** e supressão de falsos alarmes |
+| **Baseline Tabular** | `0.0469` | `1.0%` | `0.88` | Inviável (99 alarmes falsos para cada 1 fraude real). |
+| **Graph-Enhanced (Com Grafos)** | **`0.7840`** | **`16.0%`** | **`0.99`** | **Salto de +1.571% no PR-AUC**, suprimindo falsos positivos e capturando 99% das fraudes. |
 
-### Evidência Visual: Curva Precision-Recall
-
-A inclusão das métricas de rede desloca a curva de performance drasticamente para o quadrante superior direito, comprovando a eficácia analítica da abordagem:
-
-![Comparativo Curvas Precision-Recall](output/output_comparativo_impacto_metricas.png)
+![Curva PR-AUC Sobrepostas](output/curva_pr_sobrepostas.png)
 
 ### X-Ray do Modelo (Feature Importance)
 
-A análise de importância de ganho (*gain*) do XGBoost revelou que as métricas estruturais de rede dominaram o processo de decisão do algoritmo, com destaque para o grau de entrada de destino (`tgt_in_degree`) e o `tgt_pagerank`, provando que o modelo aprendeu a caçar o crime através da topologia da rede financeira.
+A análise de importância de variáveis do XGBoost revelou que o ganho preditivo não veio do acaso:
 
-![Feature Importance](output/output_top10_features_modelo_graph_enhanced.png)
+* **`tgt_in_degree`** isoladamente responde por **86,36%** da árvore de decisão do modelo.
+* Isso prova empiricamente que o algoritmo aprendeu a lógica estrutural do crime: **contas que acumulam múltiplas entradas de origem (*smurfing*) representam o principal vetor de risco de lavagem de dinheiro.**
+
+![Top 10 Feature Importance](output/top10_feature_importance.png)
 
 ---
 
 ## Estrutura do Repositório
 
-```text
-├── data/                    # Banco SQLite (aml_network.db) e datasets
-├── notebooks/               # Notebooks analíticos estruturados por fases
-│   ├── 01_coleta_e_carga.ipynb
-│   ├── 02_eda_e_auditoria.ipynb
-│   ├── 03_grafo_e_centralidade.ipynb
+```txt
+├── data/                      # Bancos de dados SQLite e datasets brutos/processados
+├── notebooks/                 # Notebooks Jupyter estruturados por fases
+│   ├── 02_eda_tabular.ipynb
+│   ├── 03_engenharia_grafos.ipynb
 │   └── 04_modelagem_preditiva.ipynb
-├── outputs/                 # Gráficos e curvas geradas nas análises
-└── README.md                # Documentação executiva do projeto
+├── src/                       # Script modular (ingestão de dados e rotinas)
+│   └── 01_ingestao_dados.py
+├── models/                    # Artefatos e modelos preditivos treinados salvos 
+│   └── xgboost_graph_enhanced_aml.pkl
+├── output/                    # Gráficos de alta resolução e relatórios visuais
+├── requirements.txt           # Dependências do projeto
+└── README.md
 ```
-
----
 
 ## Como Executar o Projeto
-Clone o Repositório
+
+Clone o repositório para o seu ambiente local:
+
 ```bash
-git clone https://github.com/m-mnzs/projeto-graph-aml.git
+git clone https://github.com/m-mnzs/projeto-graph-aml
+cd projeto-graph-aml
 ```
-Instale as dependências necessárias
+
+Crie e Ative um ambiente virtual:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # No Windows: .venv\Scripts\activate
 ```
-pip install pandas numpy scikit-learn xgboost networkx matplotlib seaborn
+
+Instale as dependências utilizando o arquivo de configuração:
+
+```bash
+pip install -r requiriments.txt
 ```
-Abra e execute os notebooks na ordem numérica (01 a 04) para reproduzir toda a investigação e modelagem.
 
-*Desenvolvido com rigor analítico e foco em Ciência de Dados aplicada à Prevenção a Fraudes.*
-
-## Dados do Projeto
-Os dados originais utilizados neste projeto são provenientes do dataset público de transações para Anti-Money Laundering (AML) da IBM disponível no Kaggle. 
-
-Para reproduzir o pipeline localmente:
-1. Acesse o Kaggle e baixe os arquivos da base de dados (`HI-Small_Trans.csv`, `HI-Small_accounts.csv`, `HI-Small_Patterns.txt`).
-2. Posicione os arquivos brutos dentro da pasta `data/` do projeto.
+Execute o script da pasta src/ e os notebooks da pasta notebooks/ seguindo a numeração sequencial para reproduzir a ingestão, a EDA e a modelagem preditiva.
